@@ -2,7 +2,7 @@
 
 A responsive shopping list application built with **React, TypeScript, Redux Toolkit, React Router and json-server** (Task 5, React Lesson 5). Users register, log in, create multiple shopping lists, add items with categories, notes and images, search and sort through the URL, and share lists through a read-only link.
 
-> The complete design, step-by-step plan, pseudocode and algorithm write-up is in [`docs/PROJECT_DOCUMENT.md`](docs/PROJECT_DOCUMENT.md).
+
 
 ## Features
 
@@ -31,7 +31,7 @@ A responsive shopping list application built with **React, TypeScript, Redux Too
 ## Getting started
 
 ```bash
-git clone <your-repo-url>
+git clone the repo
 cd shopping-list-app
 npm install
 npm start          # runs json-server (port 3001) and Vite (port 5173) together
@@ -48,7 +48,6 @@ npm run dev        # Vite dev server
 
 Other scripts: `npm run build` (type-check and production build), `npm run lint` (type-check only), `npm run preview`.
 
-To point the app at a different API, create `.env.local` with `VITE_API_URL=http://localhost:3001`.
 
 ## Project structure
 
@@ -71,18 +70,6 @@ src/
   types/        shared TypeScript types
 ```
 
-## Routes
-
-| Path | Access | Page |
-| --- | --- | --- |
-| `/login`, `/register` | Logged-out only | Auth forms |
-| `/` | Logged-in only | My lists (`?q=` and `?sort=`) |
-| `/lists/:listId` | Logged-in, owner only | Items in a list (`?q=` and `?sort=`) |
-| `/profile` | Logged-in only | Profile and login details |
-| `/shared/:shareId` | Everyone | Read-only shared list |
-
-Valid sort values: `date-desc` (default), `date-asc`, `name-asc`, `name-desc`, `category-asc`, `category-desc`.
-Example: `/lists/1?q=milk&sort=name-asc`.
 
 ## Data model (db.json)
 
@@ -90,21 +77,3 @@ Example: `/lists/1?q=milk&sort=name-asc`.
 - `lists`: `id, userId, name, category, notes, shareId, isShared, createdAt, updatedAt`
 - `items`: `id, listId, userId, name, quantity, notes, category, images[], purchased, createdAt`
 
-## Security and privacy notes
-
-- Plain-text passwords are never stored or kept in Redux; only a bcrypt hash is saved, and the hash is stripped from the user object held in the client.
-- Login errors are generic ("Incorrect email or password") so account existence is not revealed.
-- Only the minimum personal data needed (name, email, cell number) is collected, and users can update it at any time.
-- Shared links expose only the list and its items, never user details, and sharing can be revoked.
-
-**Limitation (honest note):** json-server is a development tool with no real server-side authentication, so route protection and ownership checks are enforced in the client. A production version needs a real backend with sessions or JWT, server-side authorisation, and hashing on the server. This matters for POPIA compliance, so do not use real customer data with this setup.
-
-## Testing
-
-The app was verified end to end in a real browser (register, login, CRUD, search and sort through the URL, sharing, route protection, session persistence, and no horizontal scroll at 320, 480, 768 and 1024px).
-
-## Submission checklist
-
-- [ ] Push frequent commits (one per feature)
-- [ ] Open a **pull request** on GitHub (a repo without a PR does not count)
-- [ ] Include design, plan, pseudocode and algorithm (see `docs/PROJECT_DOCUMENT.md`)
