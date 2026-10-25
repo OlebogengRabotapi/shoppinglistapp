@@ -1,0 +1,286 @@
+Pseudocode Of ShoppingList (CartCraft)
+
+Login & SignUp
+BEGIN Authentication
+  LOAD saved_session_id
+  IF saved_session_id exists THEN
+    FETCH user WHERE id = saved_session_id
+    IF user found THEN
+      SET current_user = user (without password_hash)
+    ELSE
+      CLEAR saved_session_id
+    END IF
+  END IF
+
+  DISPLAY Login_Page
+
+  IF user selects "Create an account" THEN
+    GET name, surname, email, cell_number, password, confirm_password
+    VALIDATE name, surname not empty
+    VALIDATE email format
+    VALIDATE cell_number is a valid SA number
+    VALIDATE password length >= 8 AND has letter AND has number
+    VALIDATE password = confirm_password
+    IF all fields are valid AND email not in database THEN
+      password_hash = BCRYPT_HASH(password, 10 rounds)
+      CREATE new_user_record (email, password_hash, name, surname, cell_number)
+      SAVE to database
+      SAVE session_id
+      DISPLAY success_notification
+      REDIRECT to Home
+    ELSE
+      DISPLAY error_message
+    END IF
+
+  ELSE IF user selects "Log in" THEN
+    GET email, password
+    FETCH user WHERE email = lowercase(email)
+    IF user exists AND BCRYPT_COMPARE(password, user.password_hash) THEN
+      SAVE session_id
+      DISPLAY "Welcome back" notification
+      REDIRECT to Home
+    ELSE
+      DISPLAY "Incorrect email or password"
+    END IF
+  END IF
+END Authentication
+
+BEGIN Route_Protection
+  IF page is Home OR List OR Profile THEN
+    IF current_user is empty THEN REDIRECT to Login_Page
+  END IF
+  IF page is Login OR Register THEN
+    IF current_user exists THEN REDIRECT to Home
+  END IF
+END Route_Protection
+
+
+Home
+BEGIN Home_Page
+  LOAD current_user
+  FETCH all_lists WHERE owner = current_user
+  FETCH all_items WHERE owner = current_user
+  COUNT items_total AND items_bought for each list
+
+  DISPLAY "My shopping lists" AND list_count
+  DISPLAY search_box, sort_dropdown, "New list" button
+  DISPLAY list_cards (Name, category, notes, progress_bar, date_added, Shared tag)
+
+  IF no lists exist THEN
+    DISPLAY empty_state with "Create a list" button
+  END IF
+
+  IF user clicks list_card THEN
+    REDIRECT to List_Page (list id)
+  END IF
+
+  IF user clicks nav_link THEN
+    LOAD respective_page (My Lists, Profile)
+  END IF
+
+  IF user clicks "Log out" THEN
+    CLEAR session_id, lists, items
+    REDIRECT to Login_Page
+  END IF
+END Home_Page
+
+
+List
+BEGIN Create_Or_Edit_List
+  IF user clicks "New list" THEN
+    OPEN empty list_form
+  ELSE IF user clicks "Edit" on a list_card THEN
+    OPEN list_form filled with list_data
+  END IF
+
+  GET list_name, category, notes
+  IF user clicks "Save" THEN
+    IF list_name is empty THEN
+      DISPLAY "Give your list a name"
+    ELSE
+      IF creating THEN
+        GENERATE share_id (12 random characters), SET is_shared = false
+        SAVE new_list to database
+      ELSE
+        UPDATE list in database, SET updated_at = now
+      END IF
+      DISPLAY success_notification
+      CLOSE list_form
+    END IF
+  END IF
+END Create_Or_Edit_List
+
+BEGIN Delete_List
+  IF user clicks "Delete" on a list_card THEN
+    DISPLAY confirmation_dialog
+    IF user confirms THEN
+      FETCH items WHERE list_id = list.id
+      FOR EACH item IN items
+        DELETE item from database
+      END FOR
+      DELETE list from database
+      REMOVE list from screen
+      DISPLAY success_notification
+    END IF
+  END IF
+END Delete_List
+
+
+Items
+BEGIN List_Page
+  GET list_id from URL
+  FETCH list WHERE id = list_id
+  IF list not found OR list.owner is not current_user THEN
+    DISPLAY "List not found"
+    STOP
+  END IF
+  FETCH items WHERE list_id = list.id
+
+  DISPLAY list_name, category, "bought / total" count
+  DISPLAY search_box, sort_dropdown, "Share" button, "Add item" button
+  DISPLAY item_cards (checkbox, name, quantity, category, notes, images, date_added)
+
+  IF user clicks "Add item" THEN
+    OPEN empty item_form
+  ELSE IF user clicks "Edit" on an item THEN
+    OPEN item_form filled with item_data
+  END IF
+
+  IF item_form is open THEN
+    GET item_name, quantity, category, notes
+    INITIALIZE images_array
+    WHILE user is adding images AND images_array has fewer than 3 images:
+      GET image_file
+      COMPRESS image_file to a small JPEG
+      APPEND image to images_array
+    END WHILE
+
+    IF user clicks "Save" THEN
+      IF item_name is empty THEN
+        DISPLAY "Item name is required"
+      ELSE IF quantity is not a whole number from 1 to 999 THEN
+        DISPLAY "Enter a whole number from 1 to 999"
+      ELSE
+        SAVE OR UPDATE item in database (purchased = false when new)
+        DISPLAY success_notification
+        CLOSE item_form
+      END IF
+    END IF
+  END IF
+
+  IF user ticks item_checkbox THEN
+    TOGGLE item.purchased in database
+    UPDATE progress count
+  END IF
+
+  IF user clicks "Delete" on an item THEN
+    DISPLAY confirmation_dialog
+    IF user confirms THEN
+      DELETE item from database
+      DISPLAY success_notification
+    END IF
+  END IF
+END List_Page
+
+
+Search & Sort
+BEGIN Search_And_Sort
+  READ q AND sort from URL
+  IF sort is not one of (date-desc, date-asc, name-asc, name-desc, category-asc, category-desc) THEN
+    SET sort = date-desc
+  END IF
+
+  IF user types in search_box THEN
+    WAIT 250 milliseconds
+    SET URL q = trimmed keyword
+  END IF
+
+  IF user changes sort_dropdown THEN
+    SET URL sort = selected option
+  END IF
+
+  IF URL changes (typed by hand, back or forward button) THEN
+    UPDATE search_box AND sort_dropdown from URL
+  END IF
+
+  visible_records = records WHERE lowercase(name) contains lowercase(q)
+  SORT visible_records by sort option
+  DISPLAY visible_records
+
+  IF visible_records is empty AND q is not empty THEN
+    DISPLAY "No matching" message with "Clear search" button
+  END IF
+END Search_And_Sort
+
+
+Share
+BEGIN Share_List
+  GET selected_list
+  DISPLAY share_dialog
+
+  IF list.is_shared is false THEN
+    IF user clicks "Create share link" THEN
+      UPDATE list SET is_shared = true
+      DISPLAY link = website_address + "/shared/" + list.share_id
+    END IF
+  ELSE
+    DISPLAY link (view-only)
+    IF user clicks "Copy link" THEN
+      COPY link to clipboard
+      DISPLAY "Link copied" notification
+    END IF
+    IF user clicks "Stop sharing" THEN
+      UPDATE list SET is_shared = false
+    END IF
+  END IF
+END Share_List
+
+BEGIN Shared_Page
+  GET share_id from URL
+  FETCH list WHERE share_id = share_id AND is_shared = true
+  IF list not found THEN
+    DISPLAY "This list is no longer shared"
+  ELSE
+    FETCH items WHERE list_id = list.id
+    DISPLAY list AND items in read-only mode (no checkboxes, edit or delete buttons)
+    DISPLAY search_box AND sort_dropdown
+  END IF
+END Shared_Page
+
+
+Profile
+BEGIN Profile_Page
+  FETCH user_data (name, surname, email, cell_number, created_at)
+  DISPLAY profile_summary
+  DISPLAY personal_details_form filled with user_data
+  DISPLAY login_details_form filled with email
+
+  IF user clicks "Save profile" THEN
+    VALIDATE name, surname not empty
+    VALIDATE cell_number is a valid SA number
+    IF valid THEN
+      UPDATE database with new_user_data
+      DISPLAY "Profile updated" notification
+    END IF
+  END IF
+
+  IF user clicks "Update login details" THEN
+    GET new_email, new_password (optional), current_password
+    VALIDATE email format
+    IF new_password entered THEN
+      VALIDATE password rules AND confirmation match
+    END IF
+    FETCH stored_hash
+    IF BCRYPT_COMPARE(current_password, stored_hash) is false THEN
+      DISPLAY "Your current password is incorrect"
+    ELSE IF new_email belongs to another user THEN
+      DISPLAY "That email is already in use"
+    ELSE
+      IF new_password entered THEN
+        SET password_hash = BCRYPT_HASH(new_password)
+      END IF
+      UPDATE database with new_email AND password_hash
+      DISPLAY "Login details updated" notification
+    END IF
+  END IF
+END Profile_Page
