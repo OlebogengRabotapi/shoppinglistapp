@@ -1,0 +1,127 @@
+Algorithm Of ShoppingList (CartCraft)
+
+Step 1: Register and Login
+
+User lands on the Login page (logged-out visitors are redirected here from any protected page).
+
+User clicks "Create an account", then enters Name, Surname, Email, Cell number, Password and Confirm password, and clicks Create account.
+
+System validates every field (email format, South African cell number, password of at least 8 characters with a letter and a number, passwords match) and shows an error under any invalid field.
+
+System checks that the email is not already registered, hashes the password with bcrypt, saves the user to json-server, and starts a session.
+
+Alternatively, user enters Email and Password on the Welcome back page and clicks Log in.
+
+System finds the user by email and compares the typed password with the stored hash. If either the email or the password is wrong, it shows the same message: "Incorrect email or password."
+
+System shows a success notification and redirects the user to the Home page (My shopping lists).
+
+(Logged-in users who open /login or /register are sent straight back to Home.)
+
+
+Step 2: Home Page
+
+System displays My shopping lists with the number of lists, a search box, a sort dropdown and a "+ New list" button.
+
+System shows every list the user owns as a card with its category, notes, progress bar (items bought / total items), date added and Open, Edit and Delete buttons.
+
+If the user has no lists, the system shows an empty state with a "Create a list" button.
+
+User clicks a list card (or Open) to view its items.
+
+
+Step 3: Create, Edit and Delete a Shopping List
+
+User clicks "+ New list".
+
+In the New shopping list window, user enters the Name (required), picks a Category and adds optional Notes, then clicks Create list.
+
+System saves the list and shows a notification: "<name> created."
+
+User clicks Edit on a card to change the name, category or notes, and clicks Save changes.
+
+User clicks Delete on a card. System asks for confirmation, then deletes the list together with all of its items.
+
+
+Step 4: Add and Manage Items
+
+On the list page, user clicks "+ Add item".
+
+User enters the item Name (required), Quantity (1 to 999), Category and optional Notes, and optionally uploads up to 3 images.
+
+System compresses each image, saves the item, and shows it in the list.
+
+User ticks the checkbox to mark an item as bought (the item is crossed out and the progress bar updates).
+
+User clicks Edit to change an item, or Delete to remove it after confirming.
+
+
+Step 5: Search and Sort
+
+User types a keyword in the search box.
+
+System waits a moment, then writes the keyword into the URL (for example ?q=milk) and shows only the items or lists whose name contains the keyword.
+
+User chooses a sort option: Name, Category or Date added, ascending or descending.
+
+System writes the sort into the URL (for example ?sort=name-asc) and re-orders the results.
+
+If the user edits the URL by hand or uses the browser back and forward buttons, the system reads the new values and updates the page. An invalid sort value falls back to the default (newest first).
+
+
+Step 6: Sharing
+
+On the list page, user clicks Share.
+
+User clicks "Create share link". System marks the list as shared and shows a view-only link.
+
+User clicks "Copy link" and sends it to someone.
+
+Anyone who opens the link sees the list and its items (no login needed) but cannot change anything.
+
+User can click "Stop sharing" at any time, and the link stops working.
+
+
+Step 7: Profile
+
+User clicks Profile in the navigation bar.
+
+System displays the profile summary (name, email, cell number) and two forms: Personal details and Login details.
+
+User changes Name, Surname or Cell number and clicks Save profile. System updates the database and shows a notification.
+
+To change Email or Password, user enters the new value and their Current password, then clicks "Update login details". System verifies the current password, saves the change (a new password is hashed first), and shows a notification.
+
+User clicks Log out. System ends the session and returns the user to the Login page.
+
+
+-------------------------------------------------------------------
+Supporting algorithms
+-------------------------------------------------------------------
+
+A. Filtering by name
+Trim and lower-case the keyword. Keep every record whose lower-cased name contains it. Time O(n).
+
+B. Sorting
+Copy the array (never change Redux state directly), then compare two records by:
+  Name: locale-aware text compare (so "Item 2" comes before "Item 10")
+  Category: text compare, using the name as the tie-breaker
+  Date added: difference of the created-at times
+Multiply the result by +1 for ascending or -1 for descending. Time O(n log n).
+
+C. Sort validation
+Accept the URL value only if it matches one of the six known options (date-desc, date-asc, name-asc, name-desc, category-asc, category-desc). Otherwise use date-desc.
+
+D. Password protection
+Registration: hash = bcrypt(password + random salt, 10 rounds), store only the hash.
+Login: compare(typed password, stored hash). The plain password is never stored.
+
+E. Route protection
+Protected pages (Home, List, Profile): if there is no logged-in user, redirect to Login.
+Public-only pages (Login, Register): if a user is logged in, redirect to Home.
+
+F. Deleting a list
+Fetch the list's items, delete them all, then delete the list, so no orphan items remain.
+
+G. Share link
+Each list gets a random 12-character share id when created. The shared page loads the list only if the id matches and sharing is switched on.
