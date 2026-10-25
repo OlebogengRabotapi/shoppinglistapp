@@ -1,0 +1,27 @@
+{
+  "users": [
+    {
+      "email": "rabotapipako@gmail.com",
+      "passwordHash": "$2a$10$.Dlr7N4zofqAHJGEtXOFNu5HuIby22oO/FaDjBKu8gGZ/kLipFF9.",
+      "name": "Olebogeng Pako",
+      "surname": "Rabotapi",
+      "cellNumber": "+27604469370",
+      "createdAt": "2026-10-25T21:48:36.674Z",
+      "id": 1
+    }
+  ],
+  "lists": [
+    {
+      "userId": 1,
+      "name": "Weekly Groceries",
+      "category": "Fruit & Veg",
+      "notes": "For the week",
+      "shareId": "6a0a6r4k473n",
+      "isShared": false,
+      "createdAt": "2026-10-25T22:21:36.638Z",
+      "updatedAt": "2026-10-25T22:21:52.711Z",
+      "id": 1
+    }
+  ],
+  "items": []
+}
