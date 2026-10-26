@@ -1,4 +1,7 @@
+#For changes
+
 # CartCraft: Shopping List App
+
 
 A responsive shopping list application built with **React, TypeScript, Redux Toolkit, React Router and json-server** (Task 5, React Lesson 5). Users register, log in, create multiple shopping lists, add items with categories, notes and images, search and sort through the URL, and share lists through a read-only link.
 
